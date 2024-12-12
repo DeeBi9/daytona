@@ -59,14 +59,25 @@ func setupVSCodeCustomizations(projectHostname string, projectProviderMetadata s
 	fmt.Println("Setting up IDE customizations...")
 
 	var metadata map[string]interface{}
+
 	if err := json.Unmarshal([]byte(projectProviderMetadata), &metadata); err != nil {
 		return err
 	}
 
 	if devcontainerMetadata, ok := metadata["devcontainer.metadata"]; ok {
 		var configs []devcontainer.Configuration
-		if err := json.Unmarshal([]byte(devcontainerMetadata.(string)), &configs); err != nil {
+		var devcontainerMetadataBytes []byte
+		devcontainerMetadataBytes, err = json.Marshal(devcontainerMetadata)
+		if err != nil {
 			return err
+		}
+
+		if err = json.Unmarshal(devcontainerMetadataBytes, &configs); err != nil {
+			var singleConfig devcontainer.Configuration
+			if err := json.Unmarshal(devcontainerMetadataBytes, &singleConfig); err != nil {
+				return err
+			}
+			configs = append(configs, singleConfig)
 		}
 
 		customizations := []devcontainer.Customizations{}
